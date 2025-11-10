@@ -122,7 +122,6 @@
             cursor: pointer;
             font-weight: 600;
             transition: background 0.3s;
-            width: 100%;
             font-size: 16px;
         }
         
@@ -973,45 +972,48 @@
         const totalUsers = document.getElementById('totalUsers');
         const recentActivity = document.getElementById('recentActivity');
 
-        // Event Listeners
-        document.addEventListener('DOMContentLoaded', initializeApp);
-        
-        loginTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                loginTabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            
+            // Event Listeners
+            loginTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    loginTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                });
             });
-        });
-        
-        loginForm.addEventListener('submit', handleLogin);
-        logoutBtn.addEventListener('click', handleLogout);
-        
-        sidebarLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const section = link.dataset.section;
-                showSection(section);
-                
-                sidebarLinks.forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
+            
+            loginForm.addEventListener('submit', handleLogin);
+            logoutBtn.addEventListener('click', handleLogout);
+            
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const section = this.dataset.section;
+                    showSection(section);
+                    
+                    sidebarLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                });
             });
+
+            // Quiz Event Listeners
+            prevBtn.addEventListener('click', showPreviousQuestion);
+            nextBtn.addEventListener('click', showNextQuestion);
+            restartBtn.addEventListener('click', resetQuiz);
+
+            // Chat Event Listeners
+            sendMessageBtn.addEventListener('click', sendMessage);
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') sendMessage();
+            });
+            clearChatBtn.addEventListener('click', clearChat);
+            sendAnnouncementBtn.addEventListener('click', sendAnnouncement);
+
+            // Admin Event Listeners
+            addQuizBtn.addEventListener('click', addQuiz);
         });
-
-        // Quiz Event Listeners
-        prevBtn.addEventListener('click', showPreviousQuestion);
-        nextBtn.addEventListener('click', showNextQuestion);
-        restartBtn.addEventListener('click', resetQuiz);
-
-        // Chat Event Listeners
-        sendMessageBtn.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
-        clearChatBtn.addEventListener('click', clearChat);
-        sendAnnouncementBtn.addEventListener('click', sendAnnouncement);
-
-        // Admin Event Listeners
-        addQuizBtn.addEventListener('click', addQuiz);
 
         // Application Functions
         function initializeApp() {
@@ -1080,6 +1082,7 @@
             userAvatar.textContent = currentUser.avatar;
             userName.textContent = currentUser.username;
             userRole.textContent = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
+            userRole.style.backgroundColor = currentUser.role === 'admin' ? 'var(--danger)' : 'var(--gray)';
             
             // Show/hide admin elements
             adminOnlyElements.forEach(el => {
@@ -1129,7 +1132,9 @@
                     <p>${quizData[category].length} Questions</p>
                 `;
                 
-                categoryCard.addEventListener('click', () => startQuiz(category));
+                categoryCard.addEventListener('click', function() {
+                    startQuiz(category);
+                });
                 quizCategories.appendChild(categoryCard);
             }
         }
@@ -1176,7 +1181,9 @@
                 }
                 optionElement.textContent = option;
                 optionElement.dataset.option = index;
-                optionElement.addEventListener('click', () => selectOption(index));
+                optionElement.addEventListener('click', function() {
+                    selectOption(index);
+                });
                 options.appendChild(optionElement);
             });
             
@@ -1269,7 +1276,7 @@
         // Timer Functions
         function startTimer() {
             resetTimer();
-            timerInterval = setInterval(() => {
+            timerInterval = setInterval(function() {
                 timeLeft--;
                 timer.textContent = `${timeLeft}s`;
                 
@@ -1301,7 +1308,7 @@
                 
                 // Simulate admin response after a short delay for user messages
                 if (currentUser.role !== 'admin') {
-                    setTimeout(() => {
+                    setTimeout(function() {
                         const responses = [
                             "Thanks for your question! How can I assist you further?",
                             "I understand your concern. Let me check that for you.",
@@ -1371,12 +1378,20 @@
                             <strong>${user.username}</strong>
                         </div>
                         <div class="user-actions">
-                            <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})">Delete</button>
+                            <button class="btn btn-danger btn-sm delete-user" data-id="${user.id}">Delete</button>
                         </div>
                     `;
                     
                     userList.appendChild(userItem);
                 }
+            });
+            
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-user').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const userId = parseInt(this.dataset.id);
+                    deleteUser(userId);
+                });
             });
         }
 
@@ -1393,14 +1408,31 @@
                             <strong>${category.charAt(0).toUpperCase() + category.slice(1)}</strong>: ${quiz.question}
                         </div>
                         <div class="quiz-actions">
-                            <button class="btn btn-warning btn-sm" onclick="editQuiz('${category}', ${index})">Edit</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteQuiz('${category}', ${index})">Delete</button>
+                            <button class="btn btn-warning btn-sm edit-quiz" data-category="${category}" data-index="${index}">Edit</button>
+                            <button class="btn btn-danger btn-sm delete-quiz" data-category="${category}" data-index="${index}">Delete</button>
                         </div>
                     `;
                     
                     quizList.appendChild(quizItem);
                 });
             }
+            
+            // Add event listeners to quiz buttons
+            document.querySelectorAll('.edit-quiz').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const category = this.dataset.category;
+                    const index = parseInt(this.dataset.index);
+                    editQuiz(category, index);
+                });
+            });
+            
+            document.querySelectorAll('.delete-quiz').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const category = this.dataset.category;
+                    const index = parseInt(this.dataset.index);
+                    deleteQuiz(category, index);
+                });
+            });
         }
 
         function addQuiz() {
@@ -1528,11 +1560,6 @@
                 recentActivity.removeChild(recentActivity.lastChild);
             }
         }
-
-        // Make functions available globally for onclick handlers
-        window.deleteUser = deleteUser;
-        window.editQuiz = editQuiz;
-        window.deleteQuiz = deleteQuiz;
     </script>
 </body>
 </html>
